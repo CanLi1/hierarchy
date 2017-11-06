@@ -1,0 +1,4 @@
+instead of obtaining the convex hull directly, we apply the basic step one by one.
+using the heuristic in applying the basic step
+1.apply basic step on the most fractional variable
+2.use the heuristic reported in Francisco&Grossmann find the lowest charv_{k} and apply the basic step
