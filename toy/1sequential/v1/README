@@ -1,0 +1,5 @@
+Does not apply the basic step just use the convex hull reformulation of the GDP
+However, the algorithm is still able to converge
+some of the z_dot / lambda does not satisfy the integrality constraints
+see the excel file
+The dual multipliers are also different even though z_dot/lambda satisfy the integrality constraints

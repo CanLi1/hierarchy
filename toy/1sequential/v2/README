@@ -1,0 +1,5 @@
+in this folder we solve a relaxation of the problem in /home/canl1/work/hierarchy/toy 
+in subz1.jl and subz2.jl we only have the disjunction over z1 or z2
+it turns out the algorithm cannnot converge in both cases
+the results are shown in z1.out and z2.out
+using different disjunctions will yield different lower bounds

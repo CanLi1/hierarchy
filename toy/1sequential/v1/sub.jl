@@ -52,15 +52,16 @@ function generate_sub(;qubar=0, qvbar=0, probs=0.5, ds=20)
     @constraint(s1, eq7[i in lz1,j in lz2], dot_u[i,j]+dot_v[i,j]<=ds*lambda[i,j])
 
     #x=∑ẋ, y=∑ẏ, ∑λ=1
-    @constraint(s1, sum(dot_u[i,j] for i in lz1 for j in lz2) == u)
-    @constraint(s1, sum(dot_v[i,j] for i in lz1 for j in lz2)== v)
-    @constraint(s1, sum(dot_up[i,j] for i in lz1 for j in lz2)== up)
-    @constraint(s1, sum(dot_vp[i,j] for i in lz1 for j in lz2)== vp)
-    @constraint(s1, sum(dot_qu[i,j] for i in lz1 for j in lz2)== qu)
-    @constraint(s1, sum(dot_qv[i,j] for i in lz1 for j in lz2)==qv)
-    @constraint(s1, sum(dot_z1[i,j] for i in lz1 for j in lz2) == z1)
-    @constraint(s1, sum(dot_z2[i,j] for i in lz1 for j in lz2 ) == z2 )
-    @constraint(s1, sum(lambda[i,j] for i in lz1 for j in lz2)== 1)
+    @constraint(s1, sumj1[j in lz2], sum(dot_u[i,j] for i in lz1 ) == u)
+    @constraint(s1, sumj2[j in lz2], sum(dot_v[i,j] for i in lz1 )== v)
+    @constraint(s1, sumj3[j in lz2], sum(dot_up[i,j] for i in lz1 )== up)
+    @constraint(s1, sumj4[j in lz2], sum(dot_vp[i,j] for i in lz1 )== vp)
+    @constraint(s1, sumj5[j in lz2], sum(dot_qu[i,j] for i in lz1 )== qu)
+    @constraint(s1, sumj6[j in lz2], sum(dot_qv[i,j] for i in lz1 )==qv)
+    @constraint(s1, sumj7[j in lz2], sum(dot_z1[i,j] for i in lz1 ) == z1)
+    @constraint(s1, sumj8[j in lz2], sum(dot_z2[i,j] for i in lz1  ) == z2 )
+    @constraint(s1, sumj9[j in lz2], sum(lambda[i,j] for i in lz1 )== 1)
+
 
     #0⩽ẋ⩽xᵘᵇλ    0⩽ẏ⩽yᵘᵇλ
     @constraint(s1, ub1[i in lz1,j in lz2], dot_up[i,j] <= lambda[i,j] * 3 )
@@ -73,8 +74,8 @@ function generate_sub(;qubar=0, qvbar=0, probs=0.5, ds=20)
     @constraint(s1, ub8[i in lz1,j in lz2], dot_z2[i,j] <= lambda[i,j])
 
     #yⱼ=0 or 1
-    @constraint(s1, spec1[i in lz1, j in lz2], dot_z1[i,j] == (i -1) * lambda[i,j]  )
-    @constraint(s1, spec2[i in lz1, j in lz2], dot_z2[i,j] == (j -1) * lambda[i,j]  )
+    @constraint(s1, spec1[i in lz2], dot_z1[i,1] == (i -1) * lambda[i,1]  )
+    @constraint(s1, spec2[i in lz2], dot_z2[i,2] == (i -1) * lambda[i,2]  )
 
     #objective
     @objective(s1, Min, probs*( 15 * z1 + 12 * z2  + 3* ( u + v) - 50 * (up + vp )))

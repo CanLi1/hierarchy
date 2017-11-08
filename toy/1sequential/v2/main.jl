@@ -2,7 +2,7 @@ using JuMP
 
 include("master.jl")
 include("ubsub.jl")
-include("sub.jl")
+include("subz2.jl")
 
 m = generate_master()
 
@@ -23,6 +23,8 @@ time_gen = []
 #generate subproblem 
 sub_problem = []
 ub_problem = []
+qu_record = []
+qv_record = []
 for i = 1:2
     push!(sub_problem, generate_sub(ds=all_ds[i]))
 end
@@ -39,6 +41,8 @@ while ub >= lb * 0.999
     solve(m)
     qu = getvalue(getindex(m, :qu))
     qv = getvalue(getindex(m, :qv))
+    push!(qu_record, qu)
+    push!(qv_record, qv)
 
     #change the first stage decisions and solve subproblem 
     temp_mult_v = [0.0,0.0]
@@ -92,12 +96,13 @@ while ub >= lb * 0.999
         ub = ub_record[iter]
     end
     println("the lower bound  ", lb, "\nthe upper bond is ", ub)
-
+    println("qv_record", qv_record)
+    println("qu_record", qu_record)
     #generate new master problem
     m = generate_master(mult_u=mult_u, mult_v=mult_v, g=g, iter=1:iter)
     iter = iter + 1
 
-    if iter >10
+    if iter >17
         break
     end
 end 

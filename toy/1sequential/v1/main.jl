@@ -23,6 +23,11 @@ time_gen = []
 #generate subproblem 
 sub_problem = []
 ub_problem = []
+z1_dot_record = []
+z2_dot_record = []
+qu_dot_record = []
+qv_dot_record = []
+lamda_record = [] 
 for i = 1:2
     push!(sub_problem, generate_sub(ds=all_ds[i]))
 end
@@ -46,6 +51,11 @@ while ub >= lb * 0.999
     temp_mult_g = [0.0,0.0]
     temp_sub_stat = [:ifOptimal, :ifOptimal]
     temp_ub_stat = [:ifOptimal, :ifOptimal]
+    temp_dot_z1 = [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
+    temp_dot_z2 = [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
+    temp_dot_qu = [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
+    temp_dot_qv = [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
+    temp_lambda = [0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0]
 
     for i = 1:2
         # setvalue(getindex(sub_problem[i], :qub), qu)
@@ -64,6 +74,22 @@ while ub >= lb * 0.999
         temp_mult_v[i] = getdual(getindex(sub_problem[i], :tv))
         temp_mult_u[i] = getdual(getindex(sub_problem[i], :tu ))
         temp_mult_g[i] = getobjectivevalue(sub_problem[i]) - qu * temp_mult_u[i] - qv * temp_mult_v[i]
+        #get value of zdot 
+        z1_dot = getvalue(getindex(sub_problem[i], :dot_z1))
+        z2_dot = getvalue(getindex(sub_problem[i], :dot_z2))
+        qu_dot = getvalue(getindex(sub_problem[i], :dot_qu))
+        qv_dot = getvalue(getindex(sub_problem[i], :dot_qv))        
+        ll = getvalue(getindex(sub_problem[i], :lambda))
+        for j in 1:2
+            for k in 1:2
+                index = 4*(i-1) + 2 *(j-1) + k
+                temp_dot_z1[index] = z1_dot[k,j]
+                temp_dot_z2[index] = z2_dot[k,j]
+                temp_dot_qu[index] = qu_dot[k,j]
+                temp_dot_qv[index] = qv_dot[k,j]                
+                temp_lambda[index] = ll[k,j]
+            end
+        end
     end
 
 
@@ -73,12 +99,22 @@ while ub >= lb * 0.999
         g = temp_mult_g
         sub_stat = temp_sub_stat
         ub_stat = temp_ub_stat
+        z1_dot_record = temp_dot_z1
+        z2_dot_record = temp_dot_z2
+        qu_dot_record = temp_dot_qu
+        qv_dot_record = temp_dot_qv
+        lamda_record = temp_lambda
     else
         mult_v = [mult_v temp_mult_v]
         mult_u = [mult_u temp_mult_u]
         g = [g temp_mult_g]
         sub_stat = [sub_stat temp_sub_stat]
         ub_stat = [ub_stat temp_sub_stat]
+        z1_dot_record = [z1_dot_record; temp_dot_z1]
+        z2_dot_record = [z2_dot_record ;temp_dot_z2]
+        qu_dot_record = [qu_dot_record; temp_dot_qu]
+        qv_dot_record = [qv_dot_record; temp_dot_qv]
+        lamda_record = [lamda_record ;temp_lambda]
     end 
 
 
@@ -105,9 +141,14 @@ end
 
 println(sub_stat)
 println(ub_stat)
-println(lb_record)
-println(ub_record)
-println(time_gen)
-println("mult_v", mult_v)
-println("mult_u", mult_u)
-println("g", g)
+println("lb record\n", lb_record)
+println("ub_record\n",ub_record)
+println("z1_dot_record\n",z1_dot_record)
+println("z2_dot_record\n",z2_dot_record)
+println("lamda_record\n",lamda_record)
+println("qu_dot_record\n",qu_dot_record)
+println("qv_dot_record\n",qv_dot_record)
+println("mult_v\n", mult_v)
+println("mult_u\n", mult_u)
+println("g\n", g)
+
