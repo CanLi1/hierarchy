@@ -1,10 +1,10 @@
 using JuMP
-using Ipopt
+using Mosek
 
 
 function generate_sub(;djc=[[1,2,3,4]], demand=20.0, qbar=[0.0 0.0 0.0 0.0 ], ybar=[0.0 0.0 0.0 0.0], prob=0.25)
     #set up model
-    s1 =  Model(solver=IpoptSolver())
+    s1 =  Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=0))
     # s1 = Model(solver=CplexSolver())
     ϵ=1e-5
     #sets for number of disjunctions

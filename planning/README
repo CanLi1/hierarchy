@@ -1,2 +1,6 @@
 solve a planning problem under uncertain yield,demand\
 First try a problem with 4 first stage binary 4 second stage binary
+finish the planning problem with 3 scenarios. Did not do any branch and bound on
+ the first stage variables. No basic step applied for the first and second scenario.
+ all the basic step applied for the third scenario. 
+The algorithm is able to converge to the optimal solution

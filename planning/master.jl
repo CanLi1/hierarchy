@@ -1,13 +1,13 @@
 using JuMP
 using CPLEX
 
-prob = [0.25 0.25 0.25 0.25]
-Qu = [20 20 20 20]
+prob = [0.3 0.4 0.3]
+Qu = [2.3 2.8  2 3.2]
 
 function generate_master(;mult_q=[], mult_y=[],g=[], iter=[] )
 
     #set up model
-    m1 = Model(solver=CplexSolver())
+    m1 = Model(solver=CplexSolver(CPX_PARAM_THREADS=1))
     scenarios = 1:3
 
     #sets for process
@@ -26,7 +26,7 @@ function generate_master(;mult_q=[], mult_y=[],g=[], iter=[] )
     @constraint(m1, e1[i in process], q[i]<= y[i] * Qu[i])
 
     #Benders cuts 
-    @constraint(m1, b1[s in scenarios, it in iter], η[s] >= sum(mult_q[it, s, i] * q[i] + mult_y[it, s, i] * y[i] for i in process ))
+    @constraint(m1, b1[s in scenarios, it in iter], η[s] >= g[it][s] + sum(mult_q[it][s][i] * q[i] + mult_y[it][s][i] * y[i] for i in process ))
 
     #obj
     @objective(m1, Min, sum(η[s] for s in scenarios))
