@@ -1,6 +1,6 @@
 using JuMP
 
-include("full_secondstageCH.jl")
+include("fullspace.jl")
 
 m = generate_fullspace()
 stat = solve(m)

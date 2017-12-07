@@ -1,9 +1,9 @@
 using JuMP
 
-include("full_secondstageCH.jl")
+include("relax.jl")
 
 m = generate_fullspace()
-stat = solve(m)
+stat = solve(m, relaxation=true)
 println("objective value")
 println(getobjectivevalue(m))
 println("solver status")
