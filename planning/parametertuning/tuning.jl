@@ -25,8 +25,8 @@ include("fullspace.jl")
 # println(getvalue(getindex(m, :δ)))
 
 list_d = [0.3 0.5  0.6  0.7 0.8 0.9 1 1.1 1.2]
-list_ϕ = [190 180 170 160 200  210 220 230 240  250 260 270 280 290 300 320 330 340 350 380 400]
-list_ψ = [ 8 8.5 9 9.5 10 ]
+list_ϕ = [120 150 180 210 240 270 300 330 360 390]
+list_ψ = [ 1 2 3 4 5 6 7 8 9 10 ]
 list_γ = [1 0.9 0.8 1.5 2 3 2.5 3.5 4 0.5]
 # list_d = [ 0.8 0.9 1 ]
 # list_ϕ = [ 290 300 ]
@@ -40,6 +40,9 @@ good_ϕ = []
 good_ψ = []
 good_gap = []
 good_γ = []
+is_z_good_record = []
+is_δ_good_record = []
+is_q_good_record = []
 Qu = [2.3 2.8  2 3.2]
 for d in list_d
     for ϕ in list_ϕ
@@ -72,12 +75,15 @@ for d in list_d
                 if (optvalue - lb) / optvalue > 0.01
                     is_gap_good = true
                 end 
-                if is_q_good && is_z_good && is_δ_good
+                if is_gap_good
                     push!(good_d, d)
                     push!(good_ϕ, ϕ)
                     push!(good_ψ, ψ)
                     push!(good_gap, (optvalue - lb) / optvalue)
                     push!(good_γ, γ)
+                    push!(is_q_good_record, is_q_good)
+                    push!(is_δ_good_record, is_δ_good)
+                    push!(is_z_good_record, is_z_good)
                 end 
             end
         end
@@ -89,4 +95,6 @@ println(good_ϕ)
 println(good_ψ)
 println(good_gap)
 println(good_γ)
-
+println(is_q_good_record)
+println(is_δ_good_record)
+println(is_z_good_record)
