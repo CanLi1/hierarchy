@@ -1,0 +1,113 @@
+objective value
+-6.020798369969575
+solver status
+Optimal
+First stage varialbes
+p1
+0.9999999792147991
+p2:
+0.9999999971354444
+x1
+1.0
+x2:
+1.0
+
+Second stage varialbes
+y1
+y1: 1 dimensions:
+[1] = 0.0
+[2] = 0.0
+y2:
+y2: 1 dimensions:
+[1] = 1.0
+[2] = 1.0
+q1
+q1: 1 dimensions:
+[1] = 0.9169545021181297
+[2] = 0.9999999867088954
+q2:
+q2: 1 dimensions:
+[1] = 0.9965457613422156
+[2] = 1.000000004629539
+δ:
+δ: 1 dimensions:
+[1] = 0.0
+[2] = 0.0
+
+
+
+
+objective value
+-12.576724558748214
+solver status
+Optimal
+First stage varialbes
+p1
+1.7677411201777484
+p2:
+1.996646627980483
+x1
+1.0
+x2:
+1.0
+
+Second stage varialbes
+y1
+y1: 1 dimensions:
+[1] = 0.551363481200451
+[2] = 0.5619821786796091
+y2:
+y2: 1 dimensions:
+[1] = 0.6019007138890176
+[2] = 0.5735628036130066
+q1
+q1: 1 dimensions:
+[1] = 1.6559086413782675
+[2] = 1.767741130154133
+q2:
+q2: 1 dimensions:
+[1] = 1.9966466353058747
+[2] = 1.9966465999352472
+δ:
+δ: 1 dimensions:
+[1] = 0.0
+[2] = 0.0
+
+
+
+
+objective value
+-6.044369964910974
+solver status
+Optimal
+First stage varialbes
+p1
+1.0000256634241056
+p2:
+1.035302753817708
+x1
+1.0
+x2:
+1.0
+
+Second stage varialbes
+y1
+y1: 1 dimensions:
+[1] = 0.044062186054087835
+[2] = 9.570166100740353e-6
+y2:
+y2: 1 dimensions:
+[1] = 0.9559386282405916
+[2] = 0.9999912608131891
+q1
+q1: 1 dimensions:
+[1] = 1.000025643320089
+[2] = 1.0000256913949415
+q2:
+q2: 1 dimensions:
+[1] = 1.0353027837994115
+[2] = 1.0000198587616822
+δ:
+δ: 1 dimensions:
+[1] = 0.0
+[2] = 0.0
