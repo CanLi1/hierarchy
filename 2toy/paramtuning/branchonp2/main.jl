@@ -130,6 +130,25 @@ println("p1\n", p1)
 println("p2\n", p2)
 println("x1\n", x1)
 println("x2\n", x2)
+dot_p1_over_lambda = zeros(Float64, 2, 4)
+dot_p2_over_lambda = zeros(Float64, 2, 4)
+for s in 1:2
+    dot_p1 = getvalue(getindex(sub_problem[s], :dot_p1))
+    dot_p2 = getvalue(getindex(sub_problem[s], :dot_p2)) 
+    lambda = getvalue(getindex(sub_problem[s], :dot_λ))
+    for k in 1:4
+        if lambda[k] < 1e-3
+            dot_p1_over_lambda[s,k] = -1
+            dot_p2_over_lambda[s,k] = -1
+        else
+            dot_p1_over_lambda[s,k] = dot_p1[k] / lambda[k]
+            dot_p2_over_lambda[s,k] = dot_p2[k] / lambda[k]
+        end
+
+    end
+end
+println("dot_p1_over_lambda\n", dot_p1_over_lambda)
+println("dot_p2_over_lambda\n", dot_p2_over_lambda)
 
 include("node1.jl")
 ub = 1e3 

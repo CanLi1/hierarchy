@@ -32,8 +32,8 @@ function generate_secondDNF()
     @variable(s1, dot_λ[s in scenarios,  k in max_djc]>=0)
 
     #first stage constraints
-    @constraint(s1, p1 <= 5 * x1)
-    @constraint(s1, p2  <= 6*x2)
+    @constraint(s1, p1 <= 4 * x1)
+    @constraint(s1, p2  <= 2*x2)
 
     # Ax+g(y) ⩽0, g2(y)⩽0
     @NLconstraint(s1, e1[s in scenarios,  k in max_djc], ((1-ϵ)*dot_λ[s,k]+ϵ) * (dot_q1[s,k]/((1-ϵ)*dot_λ[s,k]+ϵ) -3)^2 - ϵ * 9 *(1-dot_λ[s,k]) + ((1-ϵ)*dot_λ[s,k]+ϵ) * (dot_q2[s,k]/((1-ϵ)*dot_λ[s,k]+ϵ) -2)^2 - ϵ * 4 *(1-dot_λ[s,k]) <= 17 * dot_λ[s,k] -16 * dot_y1[s,k])

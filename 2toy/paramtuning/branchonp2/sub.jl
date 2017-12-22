@@ -5,7 +5,7 @@ prob = [0.5 0.5]
 demand =[1.5 2]
 function generate_sub(; p1bar=0, p2bar=0, x1bar=0, x2bar=0, prob=0.5, demand=2)
     # s1 =  Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=2))
-    s1 =  Model(solver=IpoptSolver())
+    s1 =  Model(solver=MosekSolver(MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000))
     scenarios = 1:2
     max_djc = 1:4
     ϵ=1e-6 

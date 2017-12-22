@@ -1,0 +1,3 @@
+we assume the demand, price, yield can vary high, medium, low and they are independent of each other
+we construct a 729 scenario problem but it is solved to fast
+therefore, we will try to solve larger problems like the planning problem we have submitted to CACE

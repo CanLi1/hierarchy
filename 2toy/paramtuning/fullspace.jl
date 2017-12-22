@@ -19,8 +19,8 @@ function generate_fullspace()
     @variable(s1, q2[s in scenarios] >=0)
     @variable(s1, δ[s in scenarios] >= 0)
     #first stage constraints
-    @constraint(s1, p1 <= 5 * x1)
-    @constraint(s1, p2  <= 6*x2)
+    @constraint(s1, p1 <= 4 * x1)
+    @constraint(s1, p2  <= 2*x2)
 
     # Ax+g(y) ⩽0, g2(y)⩽0
     @NLconstraint(s1, e1[s in scenarios], (q1[s] -3)^2 + (q2[s] - 2)^2 <= 1 + 16*(1-y1[s]))
