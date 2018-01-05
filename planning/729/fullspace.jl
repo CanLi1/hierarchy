@@ -2,8 +2,7 @@ using JuMP
 using Pajarito
 using CPLEX 
 using Mosek
-# using Ipopt
-# using KNITRO
+using Ipopt
 baseprob = [0.3 0.4 0.3]
 basedemand = [10.0 8.5  6.0]
 basemu = [0.9 1.0 1.1]
@@ -36,7 +35,7 @@ end
 function generate_fullspace()
     #set up model
     s1 =  Model(solver=PajaritoSolver(rel_gap=0.0001, mip_solver=CplexSolver(), cont_solver=MosekSolver(MSK_IPAR_NUM_THREADS=0)))
-    # s1 = Model(solver=IpoptSolver())
+    # s1 =  Model(solver=PajaritoSolver(rel_gap=0.0001, mip_solver=CplexSolver(), cont_solver=IpoptSolver()))
 
     #sets for process
     process = 1:4
@@ -75,3 +74,25 @@ function generate_fullspace()
     @objective(s1, Min, sum(prob[s]*(ϕ[s]*δ[s] + sum(α[i]*y[i]+β[i]*q[i]+γ[i]*z[i,s] + ψ[i] * R[i,s] for i in process)) for s in scenarios  ) )     
     return s1
 end
+
+
+m = generate_fullspace()
+stat = solve(m)
+println("objective value")
+println(getobjectivevalue(m))
+println("solver status")
+println(stat)
+println("First stage varialbes")
+println("q:")
+println(getvalue(getindex(m, :q)))
+println("y:")
+println(getvalue(getindex(m, :y)))
+println("\nSecond stage varialbes")
+println("R:")
+println(getvalue(getindex(m, :R)))
+println("P")
+println(getvalue(getindex(m, :P)))
+println("z")
+println(getvalue(getindex(m, :z)))
+println("δ")
+println(getvalue(getindex(m, :δ)))
