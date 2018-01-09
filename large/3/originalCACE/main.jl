@@ -1,0 +1,5 @@
+include("input.jl")
+include("sub.jl")
+s = generate_sub(demand=baseD, price=phi, prob=1.0)
+solve(s)
+# println(s)

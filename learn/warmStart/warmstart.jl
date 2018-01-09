@@ -1,0 +1,5 @@
+include("sub.jl")
+m = generate_sub()
+setvalue(getindex(m, :dot_p1)[1], -100.0 )
+println(getvalue(getindex(m, :dot_p1)[1]))
+solve(m)

@@ -5,9 +5,8 @@ using Mosek
 using Ipopt
 
 function generate_fullspace()
-	# m = Model(solver=PajaritoSolver(rel_gap=0.001, timeout=10000, mip_solver=CplexSolver(), cont_solver=MosekSolver(MSK_IPAR_NUM_THREADS=1)))
-	# m = Model(solver=PajaritoSolver(rel_gap=0.00001, mip_solver=CplexSolver(), cont_solver=IpoptSolver()))
-	m = Model(solver=IpoptSolver())
+	# m = Model(solver=PajaritoSolver(rel_gap=0.00001, mip_solver=CplexSolver(), cont_solver=MosekSolver(MSK_IPAR_NUM_THREADS=1)))
+	m = Model(solver=PajaritoSolver(rel_gap=0.00001, mip_solver=CplexSolver(), cont_solver=IpoptSolver()))
 	@variable(m, PU[r in supplier, p in plant, j in chemical, w in scenarios; (r,j) in RJ]>=0.0)
 	@variable(m, F[p in plant, c in customer, j in chemical, w in scenarios]>=0.0)
 	@variable(m, QE[p in plant, i in process]>=0.0)

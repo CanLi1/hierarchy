@@ -4,21 +4,18 @@ using Ipopt
 
 # function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24]], demand=zeros(4,6), price=zeros(4,6), xbar=zeros(3,4), Qbar=zeros(3,4), prob=0.0)
 # function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]], demand=zeros(4,6), price=zeros(4,6), xbar=zeros(3,4), Qbar=zeros(3,4), prob=0.0)
-function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8]], demand=zeros(2,6), price=zeros(2,6),  prob=0.0)
-	# s1 = Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=1, MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000, MSK_DPAR_INTPNT_TOL_REL_GAP=1e-5, MSK_DPAR_INTPNT_NL_TOL_REL_GAP=1e-5))
-	s1 = Model(solver=IpoptSolver(tol=1e-6, constr_viol_tol=1e-3, compl_inf_tol=1e-3))
+function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8]], demand=zeros(4,6), price=zeros(4,6), xbar=zeros(3,4), Qbar=zeros(3,4), prob=0.0)
+	s1 = Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=1))
+	# s1 = Model(solver=IpoptSolver())
 	ϵ=1e-5
     #sets for number of disjunctions
     disjunction=1:length(djc)
 
+    #set of binary variable in the second stage
+    J1 = 1:24
+
     #maximum number of disjuncts 
-    max_djc = 1:256
-
-    @NLparameter(s1, xbar[p in plant, i in process]==0.0)
-    @NLparameter(s1, Qbar[p in plant, i in process]==0.0)
-
-    s1[:xbar] = xbar
-    s1[:Qbar] = Qbar
+    max_djc = 1:1024
 
  	#original variables. all the binary variables are expressed in single y 
     @variable(s1, PU[r in supplier, p in plant, j in chemical; (r,j) in RJ]>=0.0)
@@ -29,8 +26,6 @@ function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8]], demand=zeros(2,6)
 	@variable(s1, Slack[c in customer, j in chemical]>=0.0)
 	@variable(s1, 0.0<=x[p in plant, i in process]<=1.0)
 	@variable(s1, 0.0<=y[j in J1]<=1.0)
-    @variable(s1, 0.0<=xx[p in plant, i in process]<=1.0)
-    @variable(s1, QEE[p in plant, i in process]>=0.0)
 
 	#variable for disjunction
     @variable(s1, dot_PU[r in supplier, p in plant, j in chemical, d in disjunction, k in max_djc; (r,j) in RJ && k<= 2^(length(djc[d]))]>=0.0)
@@ -43,14 +38,9 @@ function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8]], demand=zeros(2,6)
 	@variable(s1, 0.0<=dot_y[j in J1, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))]<=1.0)
 	@variable(s1, dot_λ[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))]>=0)
 
-	s1[:dot_λ] = dot_λ
-	s1[:dot_y] = dot_y
-
     # x=x̄
-    @NLconstraint(s1, t01[p in plant, i in process], QEE[p,i]== Qbar[p,i])
-    @NLconstraint(s1, t02[p in plant, i in process], xx[p,i]== xbar[p,i])
-    @constraint(s1, t1[p in plant, i in process], QE[p,i]== QEE[p,i])
-    @constraint(s1, t2[p in plant, i in process], x[p,i]== xx[p,i])
+	@constraint(s1, t1[p in plant, i in process], QE[p,i]== Qbar[p,i])
+	@constraint(s1, t2[p in plant, i in process], x[p,i]== xbar[p,i])
 
     # Ax+g(y) ⩽0, g2(y)⩽0
     @constraint(s1, c1[p in plant, i in process, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_QE[p,i,d,k] <= QEU[p,i] * dot_x[p,i,d,k])
@@ -60,7 +50,7 @@ function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8]], demand=zeros(2,6)
 	@constraint(s1, c7[p in plant, i in process, j in chemical, jj in chemical, s in scheme, d in disjunction, k in max_djc; (i,s,j) in L && (i,s) in PS && (i,s,jj) in JM && k<= 2^(length(djc[d]))], dot_WW[p,i,j,s,d,k] == mu[i,s,j] * dot_WW[p,i,jj,s,d,k])
 	@NLconstraint(s1, c8[p in plant, i in process, j in chemical, jj in chemical, s in scheme, d in disjunction, k in max_djc; (i,s,j) in Lbar && (i,s) in PS && (i,s,jj) in JM && k<= 2^(length(djc[d]))], ( (1-ϵ)* dot_λ[d,k]  + ϵ)*log(1.0+dot_WW[p,i,j,s,d,k]/((1-ϵ)*dot_λ[d,k] + ϵ)) >= mu[i,s,j] * dot_WW[p,i,jj,s,d,k])
 	@constraint(s1, c9[r in supplier, p in plant, j in chemical, d in disjunction, k in max_djc; (r,j) in RJ && k<= 2^(length(djc[d]))], dot_PU[r,p,j,d,k] <= PUU * dot_y[length(plant) * (r-1) + p,d,k])
-	@constraint(s1, c10[p in plant, c in customer, j in chemical, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_F[p,c,j,d,k] <= FUU * dot_y[length(plant) * length(supplier) + length(customer) *(p-1) + c, d,k])
+	@constraint(s1, c10[p in plant, c in customer, j in chemical, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], F[p,c,j] <= FUU * dot_y[length(plant) * length(supplier) + length(customer) *(p-1) + c, d,k])
 	@constraint(s1, c11[c in customer, j in chemical, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], sum(dot_F[p,c,j,d,k] for p in plant) + dot_Slack[c,j,d,k] == demand[c,j] * dot_λ[d,k])
 	
 
@@ -80,7 +70,7 @@ function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8]], demand=zeros(2,6)
     @constraint(s1, b2[p in plant, c in customer, j in chemical, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_F[p,c,j,d,k] <= FUU * dot_λ[d,k])
     @constraint(s1, b3[p in plant, i in process, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_QE[p,i,d,k] <= QEU[p,i] * dot_λ[d,k])
     @constraint(s1, b4[p in plant, i in process, j in chemical, s in scheme, d in disjunction, k in max_djc; k<= 2^(length(djc[d])) && ((i,s) in PS && (i,s,j) in JM)], dot_theta[p,i,j,s,d,k] <= 100.0 * QEU[p,i] * dot_λ[d,k])
-    @constraint(s1, b5[p in plant, i in process, j in chemical, s in scheme, d in disjunction, k in max_djc; k<= 2^(length(djc[d])) && ((i,s,j) in JM || (i,s,j) in L || (i,s,j) in Lbar)], dot_WW[p,i,j,s,d,k] <= 1.2*75.0 * dot_λ[d,k] )
+    @constraint(s1, b5[p in plant, i in process, j in chemical, s in scheme, d in disjunction, k in max_djc; k<= 2^(length(djc[d])) && ((i,s,j) in JM || (i,s,j) in L || (i,s,j) in Lbar)], dot_WW[p,i,j,s,d,k] <= 1.2*150.0 * dot_λ[d,k] )
     @constraint(s1, b6[p in plant, s in scheme, d in disjunction, k in max_djc; k<= 2^(length(djc[d])) && ((4,s,5) in JM || (4,s,5) in L || (4,s,5) in Lbar)], dot_WW[p,4,5,s,d,k] <= 10.0* dot_λ[d,k] )
     @constraint(s1, b7[c in customer, j in chemical, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_Slack[c,j,d,k] <= demand[c,j]*dot_λ[d,k])
     @constraint(s1, b8[p in plant, i in process, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_x[p,i,d,k]<= dot_λ[d,k])
