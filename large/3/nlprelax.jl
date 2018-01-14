@@ -1,12 +1,8 @@
-using JuMP
-using Mosek
-using Ipopt
-
 # function generate_nlprelax(;  demand=zeros(2,6), price=zeros(2,6), xbar=zeros(2,4), Qbar=zeros(2,4), prob=0.0)
 function generate_nlprelax(;  demand=zeros(2,6), price=zeros(2,6),  prob=0.0)
 	# s1 = Model(solver=MosekSolver(MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000, MSK_DPAR_INTPNT_TOL_REL_GAP=1e-5, MSK_DPAR_INTPNT_NL_TOL_REL_GAP=1e-5))
 	s1 = Model(solver=IpoptSolver())
-
+	# s1 = Model(solver=KnitroSolver())
 	@NLparameter(s1, xbar[p in plant, i in process]==0.0)
 	@NLparameter(s1, Qbar[p in plant, i in process]==0.0)
 

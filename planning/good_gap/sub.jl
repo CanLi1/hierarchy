@@ -1,10 +1,14 @@
 using JuMP
 using Mosek
+using Ipopt 
+using KNITRO
 
 
 function generate_sub(;djc=[[1,2,3,4]], demand=20.0, qbar=[0.0 0.0 0.0 0.0 ], ybar=[0.0 0.0 0.0 0.0], prob=0.25)
     #set up model
-    s1 =  Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=1))
+    s1 =  Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=0, MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000, MSK_DPAR_INTPNT_TOL_REL_GAP=1e-5, MSK_DPAR_INTPNT_NL_TOL_REL_GAP=1e-5))
+    # s1 = Model(solver=IpoptSolver())
+    # s1 = Model(solver=KnitroSolver())
     # s1 = Model(solver=CplexSolver())
     ϵ=1e-5
     #sets for number of disjunctions

@@ -13,6 +13,6 @@ function psolve(m::JuMP.Model)
 	temp = solve(m)
 	d = Dict()
 	d[:status] = temp
-	d[:x] = getvalue(getindex(m, :x))
+	d[:x] = getvalue(getindex(m, :x))[:]
 	return d
 end
