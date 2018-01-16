@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/large/81
-julia  get_fullspace_sol.jl 
+julia  -p 24 main.jl 

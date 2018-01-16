@@ -19,13 +19,21 @@ function psolve(m::JuMP.Model)
 	return d
 end
 function psolve_sub(m::JuMP.Model)
-	temp = solve(m)
 	d = Dict()
+	d[:error] = false
+	try
+		global temp = solve(m)
+	catch err
+		d[:error] = true
+	end	
 	d[:status] = temp
-	d[:objective] = getobjectivevalue(m)
-	d[:QE_dual] = getdual(getindex(m, :t1))
-	d[:x_dual] = getdual(getindex(m, :t2))
-	d[:model] = m
+
+	if !d[:error] && d[:status] == :Optimal
+		d[:objective] = getobjectivevalue(m)
+		d[:QE_dual] = getdual(getindex(m, :t1))
+		d[:x_dual] = getdual(getindex(m, :t2))
+		d[:model] = m
+	end
 	return d
 end
 

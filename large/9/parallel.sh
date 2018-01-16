@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/large/9
-julia -p 10 main.jl
+julia -p 24 main_cnf_dnf.jl

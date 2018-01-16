@@ -7,7 +7,7 @@ using KNITRO
 function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8]], demand=zeros(2,6), price=zeros(2,6),  prob=0.0)
 	# s1 = Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=1, MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000, MSK_DPAR_INTPNT_TOL_REL_GAP=1e-5, MSK_DPAR_INTPNT_NL_TOL_REL_GAP=1e-5))
 	# s1 = Model(solver=IpoptSolver(tol=1e-6, constr_viol_tol=1e-3, compl_inf_tol=1e-3))
-    s1 = Model(solver=KnitroSolver(KTR_PARAM_MAXTIMECPU=50.0))
+    s1 = Model(solver=KnitroSolver(KTR_PARAM_MAXTIMECPU=20.0, KTR_PARAM_OUTLEV=0))
 	ϵ=1e-5
     #sets for number of disjunctions
     disjunction=1:length(djc)

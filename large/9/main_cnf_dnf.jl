@@ -1,6 +1,6 @@
 
 
-addprocs(20)
+addprocs(23)
 @everywhere include("input.jl")
 @everywhere include("sub.jl")
 @everywhere include("master.jl")
@@ -304,50 +304,7 @@ while UB > LB * 1.001
 
         #if not in convex hull, apply one basic step accroding to heuristic 1
         if !is_in_convex_hull && length(cur_djc) >1
-            index_d = 1
-            least_frac_index = 1
-            frac = 1
-            #find the least fractional disjunction
-            for y_over_λ_d in y_over_λ
-                frac_var_index = get_disjunction_frac(y_over_λ_d)
-                if frac_var_index[:frac] < frac
-                    frac = frac_var_index[:frac]
-                    least_frac_index = index_d
-                end
-                index_d = index_d + 1
-            end
-
-            #get least_frac_index and index_disjunction 
-            binary_index_j = get_disjunction_frac(y_over_λ[least_frac_index])[:index]
-            index_disjunction = 1
-            index_d = 1
-            for disjunction in cur_djc
-                if binary_index_j in disjunction
-                    index_disjunction = index_d
-                end
-                index_d = index_d + 1
-            end
-
-            #merge least_frac_index and index_disjunction 
-            temp_djc = []
-            for k in 1:(length(cur_djc)-1)
-                push!(temp_djc, [0])
-            end
-            temp_djc[1] = [cur_djc[least_frac_index]; cur_djc[index_disjunction]]
-            
-            #break if size is too large
-            # if length(temp_djc[1]) >= 4
-            #     should_break = true
-            # end
-            index_k = 2
-            for k in 1:(length(cur_djc))
-                if k != least_frac_index && k != index_disjunction
-                    temp_djc[index_k] = cur_djc[k]
-                    index_k = index_k + 1
-                end
-            end
-
-            djc_scenarios[s] = temp_djc
+            djc_scenarios[s] = [[1,2,3,4,5,6,7,8]]
         end
 
         
@@ -368,12 +325,42 @@ while UB > LB * 1.001
     end
     d = now()
     ubsub_time = ubsub_time +  d - c 
-    
+
     if UB > temp_UB
         UB = temp_UB
     end
+    #print 
+    println("====================")
+    b=now()
+    println(b-a)
+    println("current upper bound is ")
+    println(UB)
+    println("current lower bound is ")
+    println(LB)
+    println(djc_scenarios)
+    println(obj_master)
+    println(sub_obj_record)
+    println(djc_scenarios)
+    println("Optimal first stage solution")
+    print("xbar=")
+    println(xbar_for_ub)
+    print("Qbar=")
+    println(QEbar_for_ub)
+    println("ubsub_time")
+    println(ubsub_time)
+    println("sub_time")
+    println(sub_time)
+    println("master_time")
+    println(master_time)
+    println("resolve_sub_time")
+    println(resolve_sub_time)
 
-    if should_break 
+
+
+    if all_scenarios_in_convex_hull
+        break
+    end
+    if length(mult_QE) > temp_length + 300 
         break
     end
    
@@ -401,10 +388,7 @@ println(master_time)
 println("resolve_sub_time")
 println(resolve_sub_time)
 
-print("mult_QE=")
-println(mult_QE)
-print("mult_x=")
-println(mult_x)
+
 
 
 # println(sub_stat)
