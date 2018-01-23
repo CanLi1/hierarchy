@@ -1,6 +1,6 @@
 
 
-addprocs(20)
+addprocs(23)
 @everywhere include("input.jl")
 @everywhere include("sub.jl")
 @everywhere include("master.jl")
@@ -368,18 +368,55 @@ while UB > LB * 1.001
     end
     d = now()
     ubsub_time = ubsub_time +  d - c 
-    
+
     if UB > temp_UB
         UB = temp_UB
     end
+    #print 
+    println("====================")
+    b=now()
+    println(b-a)
+    println("current upper bound is ")
+    println(UB)
+    println("current lower bound is ")
+    println(LB)
+    println(djc_scenarios)
+    println(obj_master)
+    println(sub_obj_record)
+    println(djc_scenarios)
+    println("Optimal first stage solution")
+    print("xbar=")
+    println(xbar_for_ub)
+    print("Qbar=")
+    println(QEbar_for_ub)
+    println("ubsub_time")
+    println(ubsub_time)
+    println("sub_time")
+    println(sub_time)
+    println("master_time")
+    println(master_time)
+    println("resolve_sub_time")
+    println(resolve_sub_time)
+
+    # print("mult_QE=")
+    # println(mult_QE)
+    # print("mult_x=")
+    # println(mult_x)
+    # println("g")
+    # println(g)
+
 
     if should_break 
+        break
+    end
+    if length(mult_QE) > temp_length + 300 
         break
     end
    
 
 end
 b=now()
+println("========\n total time")
 println(b-a)
 println(temp_length)
 println(UB)
@@ -401,10 +438,12 @@ println(master_time)
 println("resolve_sub_time")
 println(resolve_sub_time)
 
-print("mult_QE=")
-println(mult_QE)
-print("mult_x=")
-println(mult_x)
+# print("mult_QE=")
+# println(mult_QE)
+# print("mult_x=")
+# println(mult_x)
+# println("g")
+# println(g)
 
 
 # println(sub_stat)

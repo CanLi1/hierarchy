@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Set the number of nodes and processes per node
-#PBS -l nodes=1:ppn=12
+#PBS -l nodes=1:ppn=3
 
 # Set max wallclock time
 #PBS -l walltime=48:00:00
@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/large/27
-julia -p 24 get_fullspace_sol.jl 
+julia fullspace1.jl 

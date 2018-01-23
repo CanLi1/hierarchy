@@ -2,13 +2,13 @@ using Pajarito
 using CPLEX 
 # using Ipopt 
 # using Mosek
-# using BARON
+using BARON
 function generate_ubsub(; demand=zeros(2,6), price=zeros(2,6), prob=0.0, Qbar=zeros(2,4), xbar=zeros(2,4))
 	#set up model
-    s1 =  Model(solver=PajaritoSolver(rel_gap=0.0001, log_level=0, mip_solver=CplexSolver(CPX_PARAM_SCRIND=0 ), cont_solver=IpoptSolver(print_level=0)))
+    # s1 =  Model(solver=PajaritoSolver(rel_gap=0.0001, log_level=0, mip_solver=CplexSolver(CPX_PARAM_SCRIND=0 ), cont_solver=IpoptSolver(print_level=0)))
     # s1 =  Model(solver=PajaritoSolver(rel_gap=0.0001, mip_solver=CplexSolver(CPX_PARAM_SCRIND=0), cont_solver=MosekSolver()))
     # s1 = Model(solver=KnitroSolver())
-    # s1 = Model(solver=BaronSolver(Threads=24))
+    s1 = Model(solver=BaronSolver(Threads=24))
 
     @variable(s1, PU[r in supplier, p in plant, j in chemical; (r,j) in RJ]>=0.0)
 	@variable(s1, F[p in plant, c in customer, j in chemical]>=0.0)

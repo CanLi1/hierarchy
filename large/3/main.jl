@@ -1,12 +1,13 @@
 
 
-addprocs(10)
+addprocs(23)
 @everywhere include("input.jl")
 @everywhere include("sub.jl")
 @everywhere include("master.jl")
 @everywhere include("ubsub.jl")
 @everywhere include("nlprelax.jl")
 @everywhere include("util.jl")
+@everywhere include("mosek_sub.jl")
 #generate subproblem
 sub_problem = []
 ub_problem = []
@@ -23,9 +24,13 @@ g = []
 xbar_record = []
 QEbar_record = []
 sub_obj_record = []
-c=now()
-d=now()
-redundant_time = d-c
+a = now()
+b = now()
+sub_time = a - b
+master_time = a - b
+ubsub_time = a - b 
+resolve_sub_time = a - b 
+
 for s in scenarios
     push!(djc_scenarios, [[1],[2],[3],[4],[5],[6],[7],[8]])
 end
@@ -39,7 +44,10 @@ m = generate_master()
 obj_master = []
 a = now()
 while relax_UB > relax_LB + 1e-1
+    c = now()
     solve(m)
+    d = now()
+    master_time = master_time + d - c 
     relax_LB = getobjectivevalue(m)
     push!(obj_master, getobjectivevalue(m))
     QEbarr = getvalue(getindex(m, :QE))
@@ -65,8 +73,10 @@ while relax_UB > relax_LB + 1e-1
             end
         end
     end
-
+    c = now()
     results = pmap(psolve, sub_problem)
+    d = now()
+    sub_time = sub_time + d - c
 
     for s in scenarios
         sub_problem[s] = results[s][:model]
@@ -105,6 +115,7 @@ while relax_UB > relax_LB + 1e-1
     # if length(mult_QE) > 1
     #     break
     # end
+    
 end
 
 temp_length = length(mult_QE)
@@ -124,7 +135,10 @@ while UB > LB * 1.001
     m = generate_master(mult_QE=mult_QE, mult_x=mult_x, g=g, iter=1:length(mult_QE))
 
     while relax_UB > relax_LB + 1e-1
+        c= now()
         solve(m)
+        d = now()
+        master_time = master_time + d - c 
         push!(obj_master, getobjectivevalue(m))
         relax_LB = getobjectivevalue(m)
         QEbarr = getvalue(getindex(m, :QE))
@@ -151,15 +165,39 @@ while UB > LB * 1.001
             end
 
         end
-
+        c = now()
         global results = pmap(psolve_sub, sub_problem)
+        d = now()
+        sub_time = sub_time + d - c 
 
         for s in scenarios
-            sub_problem[s] = results[s][:model]
+            if !results[s][:error] && results[s][:status] == :Optimal
+                sub_problem[s] = results[s][:model]
+            end
+            # if results[s][:status] != :Optimal
+            #     error("NLP solver converges to an infeasible solution")
+            # end  
             if results[s][:status] != :Optimal
-                error("NLP solver converges to an infeasible solution")
-            end  
+                sub_problem[s] = generate_mosek_sub(djc=djc_scenarios[s], demand=D[1:2, 1:6, s], price=phi, prob=prob[s])
+                #update first stage decisions
+                for p in plant
+                    for i in process
+                        setvalue(getindex(sub_problem[s], :Qbar)[p,i], QEbarr[p,i])
+                        setvalue(getindex(sub_problem[s], :xbar)[p,i], xbarr[p,i])
+                    end
+                end
+                c = now()
+                temp = solve(sub_problem[s])
+                d = now()
+                sub_time = sub_time + d - c
+                results[s][:status] = temp
+                results[s][:QE_dual] = getdual(getindex(sub_problem[s], :t1))
+                results[s][:x_dual] = getdual(getindex(sub_problem[s], :t2))
+                results[s][:objective] = getobjectivevalue(sub_problem[s])
 
+                #revert back to knitro
+                sub_problem[s] = generate_sub(djc=djc_scenarios[s], demand=D[1:2, 1:6, s], price=phi, prob=prob[s])
+            end
             push!(temp_sub_stat, results[s][:status])   
             for p in plant
                 for i in process
@@ -191,14 +229,13 @@ while UB > LB * 1.001
             break
         end
 
-
+        
     end 
 
     #update lower bound
     LB = relax_LB
 
     #regenerate the sub_problem and solve again
-    c = now()
     sub_problem = []
     for s in scenarios
         push!(sub_problem, generate_sub(djc=djc_scenarios[s], demand=D[1:2, 1:6, s], price=phi, prob=prob[s]))
@@ -208,10 +245,25 @@ while UB > LB * 1.001
                 setvalue(getindex(sub_problem[s], :xbar)[p,i], xbar_for_ub[p,i])
             end
         end
-        solve(sub_problem[s])
+        c = now()
+        temp = solve(sub_problem[s])
+        d = now()
+        resolve_sub_time = resolve_sub_time + d - c 
+        if temp != :Optimal
+            sub_problem[s] = generate_mosek_sub(djc=djc_scenarios[s], demand=D[1:2, 1:6, s], price=phi, prob=prob[s])
+            for p in plant
+                for i in process
+                    setvalue(getindex(sub_problem[s], :Qbar)[p,i], QEbar_for_ub[p,i])
+                    setvalue(getindex(sub_problem[s], :xbar)[p,i], xbar_for_ub[p,i])
+                end
+            end
+            c = now()
+            solve(sub_problem[s])
+            d = now()
+            resolve_sub_time = resolve_sub_time + d - c 
+        end
+
     end    
-    d = now()
-    redundant_time = redundant_time + d - c
     #now check if the solution is in convex hull 
     all_scenarios_in_convex_hull = true
 
@@ -308,21 +360,64 @@ while UB > LB * 1.001
     end
 
     #solve upper bound subproblem in parallel
-    results = pmap(ub_psolve, ub_sub_problem)
-    temp_UB = sum(results[s][:objective] for s in scenarios)
+    c = now()
+    temp_UB = 0.0
+    for s in scenarios
+        solve(ub_sub_problem[s])
+        temp_UB = temp_UB + getobjectivevalue(ub_sub_problem[s])
+    end
+    d = now()
+    ubsub_time = ubsub_time +  d - c 
+
     if UB > temp_UB
         UB = temp_UB
     end
+    #print 
+    println("====================")
+    b=now()
+    println(b-a)
+    println("current upper bound is ")
+    println(UB)
+    println("current lower bound is ")
+    println(LB)
+    println(djc_scenarios)
+    println(obj_master)
+    println(sub_obj_record)
+    println(djc_scenarios)
+    println("Optimal first stage solution")
+    print("xbar=")
+    println(xbar_for_ub)
+    print("Qbar=")
+    println(QEbar_for_ub)
+    println("ubsub_time")
+    println(ubsub_time)
+    println("sub_time")
+    println(sub_time)
+    println("master_time")
+    println(master_time)
+    println("resolve_sub_time")
+    println(resolve_sub_time)
+
+    print("mult_QE=")
+    println(mult_QE)
+    print("mult_x=")
+    println(mult_x)
+    println("g")
+    println(g)
+
 
     if should_break 
         break
     end
-    
+    if length(mult_QE) > temp_length + 300 
+        break
+    end
+   
 
 end
 b=now()
+println("========\n total time")
 println(b-a)
-println(redundant_time)
 println(temp_length)
 println(UB)
 println(LB)
@@ -334,10 +429,21 @@ print("xbar=")
 println(xbar_for_ub)
 print("Qbar=")
 println(QEbar_for_ub)
-print("mult_QE=")
-println(mult_QE)
-print("mult_x=")
-println(mult_x)
+println("ubsub_time")
+println(ubsub_time)
+println("sub_time")
+println(sub_time)
+println("master_time")
+println(master_time)
+println("resolve_sub_time")
+println(resolve_sub_time)
+
+# print("mult_QE=")
+# println(mult_QE)
+# print("mult_x=")
+# println(mult_x)
+# println("g")
+# println(g)
 
 
 # println(sub_stat)

@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/large/3
-julia -p 3  main.jl
+julia fullspace1.jl
