@@ -5,6 +5,11 @@ scheme = 1:4
 supplier = 1:2
 plant = 1:2
 customer = 1:2
+intp = 1:20
+intWW = zeros(length(intp))
+for i in intp
+  intWW[i] = 1.3^(i-1) - 1
+end
     #set of binary variable in the second stage
 J1 = 1:8
 
@@ -88,13 +93,28 @@ baseprob = [0.25 0.5 0.25]
 
 #demand and price
 #3 scenarios
-scenarios=1:3
-D = zeros(2,6,3)
-D[1:2, 1:6, 1] = baseD[1:2,  1:6] * 0.7
-D[1:2, 1:6, 2] = baseD[1:2,  1:6] 
-D[1:2, 1:6, 3] = baseD[1:2,  1:6] * 1.3
-prob=baseprob
-
+# scenarios=1:3
+# D = zeros(2,6,3)
+# D[1:2, 1:6, 1] = baseD[1:2,  1:6] * 0.7
+# D[1:2, 1:6, 2] = baseD[1:2,  1:6] 
+# D[1:2, 1:6, 3] = baseD[1:2,  1:6] * 1.3
+# prob=baseprob
+# scenarios = 1:27       
+# prob = zeros(27)
+# D = zeros(2,6,27)
+# phi = zeros(2, 6,27)
+# ratios = [0.7 1.0 1.3]
+# for gen1 in 1:3
+#   for gen2 in 1:3
+#     for gen3 in 1:3
+#       temp_s = 3*(gen1-1) + gen2 + 9 * (gen3-1)
+#       D[1, 1:6, temp_s] = baseD[1, 1:6] *  ratios[gen1]
+#       D[2, 1:6, temp_s] = baseD[2, 1:6] *  ratios[gen2]
+#       prob[temp_s] = baseprob[gen1] * baseprob[gen2] * baseprob[gen3] 
+#       phi[1:2, 1:6, temp_s] = basephi[1:2, 1:6] * ratios[gen3]
+#     end
+#   end
+# end
 # #81 scenarios
 # scenarios = 1:81       
 # prob = zeros(81)
@@ -114,8 +134,28 @@ prob=baseprob
 #     end
 #   end
 # end
-phi = basephi
+
 #probability
 
-
+#81 scenarios
+scenarios = 1:81       
+prob = zeros(81)
+D = zeros(2,6,81)
+ratios = [0.7 1.0 1.3]
+phi = zeros(2, 6,81)
+for gen1 in 1:3
+  for gen2 in 1:3
+    for gen3 in 1:3
+      for gen4 in 1:3
+        temp_s = 3*(gen1-1) + gen2 + 9 *(gen3-1) + 27 * (gen4-1)
+        D[1, 1:6, temp_s] = baseD[1, 1:6] *  ratios[gen1]
+        D[2, 1:6, temp_s] = baseD[2, 1:6] *  ratios[gen2]
+        phi[1:2, 1:6, temp_s] = basephi[1:2, 1:6]
+        phi[1:2, 3, temp_s] = basephi[1:2, 3] * ratios[gen3]
+        phi[1:2, 5, temp_s] = basephi[1:2, 5] * ratios[gen4] 
+        prob[temp_s] = baseprob[gen1] * baseprob[gen2] * baseprob[gen3] * baseprob[gen4]
+      end
+    end
+  end
+end
 
