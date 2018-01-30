@@ -30,7 +30,7 @@ function check_integer(array)
 end
 
 function psolve(m::JuMP.Model)
-	temp = solve(m, relaxation=true)
+	temp = solve(m)
 	d = Dict()
 	d[:status] = temp
 	d[:objective] = getobjectivevalue(m)

@@ -3,15 +3,15 @@ using Mosek
 using Ipopt
 using KNITRO
 using BARON
-function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24]], Q=zeros(5), prob=0.0)
-# function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9]], Q=zeros(5), prob=0.0)
+# function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24]], Q=zeros(5), prob=0.0)
+function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9]], Q=zeros(5), prob=0.0)
     # s1 = Model(solver=KnitroSolver())
-    s1 = Model(solver=IpoptSolver())
-    # s1 = Model(solver=MosekSolver())
+    # s1 = Model(solver=IpoptSolver())
+    s1 = Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=1, MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000))
     #, KTR_PARAM_OUTLEV=1
 	# s1 = Model(solver=BaronSolver())
 	#KTR_PARAM_MAXTIMECPU=120.0
-	ϵ=1e-5
+	ϵ=1e-7
     #sets for number of disjunctions
     disjunction=1:length(djc)
 
@@ -97,8 +97,8 @@ function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],
     @constraint(s1, b9[i in products, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_b[i,d,k]<=dot_λ[d,k]*log(min(VU*inv_S[i,:])))
     @constraint(s1, b10[i in products, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_b[i,d,k]>=dot_λ[d,k]*log(min(VL*inv_S[i,:])))
     @constraint(s1, b11[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_L[d,k]<=dot_λ[d,k]*1.2e5)
-    @constraint(s1, b12[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_firststagecost[d,k] <=prob * dot_λ[d,k] * 7e6)
-    @constraint(s1, b13[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_secondstagecost[d,k] <= prob * dot_λ[d,k] * 2.7e7)
+    @constraint(s1, b12[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_firststagecost[d,k] <=prob * dot_λ[d,k] * 2.4e5)
+    @constraint(s1, b13[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_secondstagecost[d,k] <= prob * dot_λ[d,k] * 2e7)
 
     #yⱼ=0 or 1
     index_d = 1

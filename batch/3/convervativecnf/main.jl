@@ -7,7 +7,6 @@ addprocs(3)
 @everywhere include("ubsub.jl")
 @everywhere include("nlprelax.jl")
 @everywhere include("util.jl")
-@everywhere include("mosek_nlprelax.jl")
 
 #generate subproblem
 sub_problem = []
@@ -33,7 +32,7 @@ ubsub_time = a - b
 resolve_sub_time = a - b 
 
 for s in scenarios
-    push!(djc_scenarios, [[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24]])
+    push!(djc_scenarios, [[1],[2],[3],[4],[5],[6],[7],[8],[9]])
 end
 
 #generate subproblem and master problem 
@@ -76,14 +75,6 @@ while relax_UB > relax_LB + 1
     	push!(temp_g, 0.0)
 
     	#update first stage decisions
-        # for j in stages
-        #     JuMP.setRHS(getindex(sub_problem[s], :t3)[j], nbarr[j])
-        #     JuMP.setRHS(getindex(sub_problem[s], :t2)[j], vbarr[j])
-        #     for int in integer
-        #         JuMP.setRHS(getindex(sub_problem[s], :t1)[int,j], yfbarr[int,j])
-        #     end
-        # end
-                #update first stage decisions
         for j in stages
             setvalue(getindex(sub_problem[s], :nbar)[j], nbarr[j])
             setvalue(getindex(sub_problem[s], :vbar)[j], vbarr[j])
@@ -92,40 +83,18 @@ while relax_UB > relax_LB + 1
             end
         end
     end
-    # println(yfbarr)
-    # println(nbarr)
-    # println(vbarr)
+    println(yfbarr)
+    println(nbarr)
+    println(vbarr)
     c = now()
-    results = pmap(psolve_sub, sub_problem)
+    results = pmap(psolve, sub_problem)
     d = now()
     sub_time = sub_time + d - c
 
     for s in scenarios
-        if results[s][:status] == :Optimal
-            sub_problem[s] = results[s][:model]
-        end
+        sub_problem[s] = results[s][:model]
         if results[s][:status] != :Optimal
-            # error("NLP solver converges to an infeasible solution")
-            sub_problem[s] = generate_mosek_nlprelax(Q=Q[:,s], prob =prob[s])
-            for j in stages
-                setvalue(getindex(sub_problem[s], :nbar)[j], nbarr[j])
-                setvalue(getindex(sub_problem[s], :vbar)[j], vbarr[j])
-                for int in integer
-                    setvalue(getindex(sub_problem[s], :yfbar)[int,j], yfbarr[int,j])
-                end
-            end   
-            c = now()
-            temp = solve(sub_problem[s])
-            d = now()
-            sub_time = sub_time + d - c
-            results[s][:status] = temp
-            results[s][:yf_dual] = getdual(getindex(sub_problem[s], :t1))
-            results[s][:v_dual] = getdual(getindex(sub_problem[s], :t2))
-            results[s][:n_dual] = getdual(getindex(sub_problem[s], :t3))
-            results[s][:objective] = getobjectivevalue(sub_problem[s])
-
-            #revert back to ipopt
-            sub_problem[s] = generate_nlprelax(Q=Q[:,s], prob =prob[s])
+            error("NLP solver converges to an infeasible solution")
         end  
 
         push!(temp_sub_stat, results[s][:status])	
@@ -154,16 +123,14 @@ while relax_UB > relax_LB + 1
     push!(sub_stat, temp_sub_stat)
 
     m = generate_master(mult_yf=mult_yf, mult_n=mult_n, mult_v=mult_v,g=g, iter=1:length(mult_yf))
-    println(sub_obj_record)
-    println(obj_master)
+
     # if length(mult_yf)> 50 && obj_master[length(mult_yf)] - obj_master[length(mult_yf)-1] <1e-3
     # 	break
     # end
-    # if length(mult_yf) > 5
+    # if length(mult_yf) > 1
     #     break
     # end
-    # break
-   
+    
 end
 
 temp_length = length(mult_yf)
@@ -207,11 +174,7 @@ while UB > LB * 1.001
         temp_mult_v = []
         temp_g = []
         temp_sub_stat = []
-        println("===============")
-        println(nbarr)
-        println(vbarr)
-        println(yfbarr)
-        println("===========")
+
         #initialize 
         for s in scenarios
             push!(temp_mult_yf, zeros(length(integer), length(stages)))
@@ -220,12 +183,11 @@ while UB > LB * 1.001
             push!(temp_g, 0.0)
 
             #update first stage decisions
-
             for j in stages
-                JuMP.setRHS(getindex(sub_problem[s], :t3)[j], nbarr[j])
-                JuMP.setRHS(getindex(sub_problem[s], :t2)[j], vbarr[j])
+                setvalue(getindex(sub_problem[s], :nbar)[j], nbarr[j])
+                setvalue(getindex(sub_problem[s], :vbar)[j], vbarr[j])
                 for int in integer
-                    JuMP.setRHS(getindex(sub_problem[s], :t1)[int,j], yfbarr[int,j])
+                    setvalue(getindex(sub_problem[s], :yfbar)[int,j], yfbarr[int,j])
                 end
             end
         end
@@ -236,8 +198,9 @@ while UB > LB * 1.001
         sub_time = sub_time + d - c
 
         for s in scenarios
+            sub_problem[s] = results[s][:model]
             if results[s][:status] != :Optimal
-                error("lp solver converges to an infeasible solution")
+                error("NLP solver converges to an infeasible solution")
             end  
 
             push!(temp_sub_stat, results[s][:status])   
@@ -287,10 +250,10 @@ while UB > LB * 1.001
     for s in scenarios
         push!(sub_problem, generate_sub(djc=djc_scenarios[s], Q=Q[:,s], prob =prob[s]))
         for j in stages
-            JuMP.setRHS(getindex(sub_problem[s], :t3)[j], nbar_for_ub[j])
-            JuMP.setRHS(getindex(sub_problem[s], :t2)[j], vbar_for_ub[j])
+            setvalue(getindex(sub_problem[s], :nbar)[j], nbar_for_ub[j])
+            setvalue(getindex(sub_problem[s], :vbar)[j], vbar_for_ub[j])
             for int in integer
-                JuMP.setRHS(getindex(sub_problem[s], :t1)[int,j], yfbar_for_ub[int,j])
+                setvalue(getindex(sub_problem[s], :yfbar)[int,j], yfbar_for_ub[int,j])
             end
         end
         c = now()
@@ -436,7 +399,7 @@ while UB > LB * 1.001
     if should_break 
         break
     end
-    if length(mult_yf) > temp_length + 100 
+    if length(mult_yf) > temp_length + 300 
         break
     end
    

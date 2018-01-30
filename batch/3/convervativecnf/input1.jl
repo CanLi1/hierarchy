@@ -1,18 +1,14 @@
 #sets
-include("util.jl")
 products=1:5
 stages = 1:6
 integer = 1:4
 J1 = 1:(length(integer) * length(stages))
-intp = 1:300
-
-
 #parameters
 alpha = ones(length(stages)) * 250.0
 beta = ones(length(stages)) * 0.6
 delta = 230.0
 lambda = ones(length(stages)) * 2000
-VL = 1300.0
+VL = 300.0
 VU = 2300.0
 H = 5000
 
@@ -53,59 +49,4 @@ Q = zeros(length(products), 3)
 Q[1:length(products), 1] = baseQ[1:length(products)] * ratio[1]
 Q[1:length(products), 2] = baseQ[1:length(products)] * ratio[2]
 Q[1:length(products), 3] = baseQ[1:length(products)] * ratio[3]
-
-
-#point of interpolation
-int_tl_b = zeros(length(products), length(intp))
-int_n_v = zeros(length(stages), length(intp))
-int_ns = zeros(length(integer), length(stages), length(scenarios))
-lb_tl_b = zeros(length(products))
-ub_tl_b = zeros(length(products))
-
-for i in products
-	lb_tl_b[i] = max(t[i, 1:length(stages)]) / length(integer) /VU * max(S[i, 1:length(stages)])
-	ub_tl_b[i] = max(t[i, 1:length(stages)])/VL * max(S[i, 1:length(stages)])
-end
-
-for i in products
-	step = (ub_tl_b[i] - lb_tl_b[i]) / (length(intp) - 1) 
-	for int in intp
-		int_tl_b[i, int] = log(lb_tl_b[i] + (int-1) * step)
-	end
-end
-
-lb_nv = VL^0.6
-ub_nv = length(integer)*VU^0.6
-step = (ub_nv-lb_nv) /(length(intp) - 1)
-for j in stages
-	for int in intp
-		int_n_v[j, int] = log(lb_nv + (int - 1) * step)
-	end
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

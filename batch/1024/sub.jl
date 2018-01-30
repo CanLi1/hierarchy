@@ -1,23 +1,31 @@
 using JuMP
-using Gurobi
-using CPLEX
-function generate_sub(; yfbar=zeros(length(integer), length(stages)), nbar=zeros(length(stages)), vbar=log(VL) * ones(length(stages)), djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24]], Q=zeros(5), prob=0.0)
-# function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9]], Q=zeros(5), prob=0.0)
+using Mosek
+using Ipopt
+using KNITRO
+using BARON
+# function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24]], Q=zeros(5), prob=0.0)
+function generate_sub(; djc=[[1],[2],[3],[4],[5],[6],[7],[8],[9]], Q=zeros(5), prob=0.0)
     # s1 = Model(solver=KnitroSolver())
     # s1 = Model(solver=IpoptSolver())
-    # s1 = Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=1, MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000))
+    s1 = Model(solver=MosekSolver( MSK_IPAR_NUM_THREADS=1, MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000))
+    #MSK_IPAR_LOG=0,
     #, KTR_PARAM_OUTLEV=1
 	# s1 = Model(solver=BaronSolver())
 	#KTR_PARAM_MAXTIMECPU=120.0
-    s1 = Model(solver=GurobiSolver(Method=1))
-    # s1 = Model(solver=CplexSolver(CPX_PARAM_THREADS=1))
+	ϵ=1e-6
     #sets for number of disjunctions
     disjunction=1:length(djc)
 
     #maximum number of disjuncts 
-    max_djc = 1:1024
+    max_djc = 1:512
 
+	@NLparameter(s1, yfbar[int in  integer, j in stages]==0.0)
+	@NLparameter(s1, nbar[j in stages]==0.0)
+	@NLparameter(s1, vbar[j in stages]==0.0)
 
+	s1[:yfbar] = yfbar
+	s1[:nbar] = nbar
+	s1[:vbar] = vbar
 
 	@variable(s1, 0<=yf[int in integer, j in stages]<=1)
 	@variable(s1, 0<=ys[j in J1]<=1)
@@ -29,8 +37,10 @@ function generate_sub(; yfbar=zeros(length(integer), length(stages)), nbar=zeros
 	@variable(s1, L>=0)
 	@variable(s1, firststagecost>=0)
 	@variable(s1, secondstagecost>=0)
-    @variable(s1, tl_b[i in products])
-    @variable(s1, n_v[j in stages])
+
+	@variable(s1, 0<=yff[int in integer, j in stages]<=1)
+	@variable(s1, nn[j in stages])
+	@variable(s1, log(VL)<=vv[j in stages]<=log(VU))
 
 	#variable for disjunction 
 	@variable(s1, 0<=dot_yf[int in integer, j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))]<=1)
@@ -43,28 +53,25 @@ function generate_sub(; yfbar=zeros(length(integer), length(stages)), nbar=zeros
 	@variable(s1, dot_L[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))]>=0)
 	@variable(s1, dot_firststagecost[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))]>=0)
 	@variable(s1, dot_secondstagecost[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))]>=0)
-    @variable(s1, dot_tl_b[i in products, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))])
-    @variable(s1, dot_n_v[j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))])
-    @variable(s1, dot_λ[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))]>=0)
+	@variable(s1, dot_λ[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))]>=0)
 	
 	#x=x̂
-	@constraint(s1, t1[int in integer, j in stages], yf[int, j] == yfbar[int, j])
-	@constraint(s1, t2[j in stages], v[j] == vbar[j])
-	@constraint(s1, t3[j in stages], n[j] == nbar[j])		
+	@NLconstraint(s1, t01[int in integer, j in stages], yff[int, j]==yfbar[int, j])
+	@NLconstraint(s1, t02[j in stages], nn[j]==nbar[j])
+	@NLconstraint(s1, t03[j in stages], vv[j]==vbar[j])
+	@constraint(s1, t1[int in integer, j in stages], yf[int, j] == yff[int, j])
+	@constraint(s1, t2[j in stages], v[j] == vv[j])
+	@constraint(s1, t3[j in stages], n[j] == nn[j])		
 
 	# Ax+g(y) ⩽0, g2(y)⩽0
-    #constraints for intp 
-    @constraint(s1, intp1[i in products, int in intp, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_tl_b[i,d,k]>= exp(int_tl_b[i, int]) * dot_λ[d,k] + exp(int_tl_b[i, int]) *(dot_tl[i,d,k] - dot_b[i,d,k] - int_tl_b[i, int] * dot_λ[d,k])   )
-    @constraint(s1, intp2[j in stages, int in intp, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_n_v[j,d,k] >= exp(int_n_v[j, int]) * dot_λ[d,k] + exp(int_n_v[j, int]) * (dot_n[j,d,k] + beta[j] * dot_v[j,d,k] - int_n_v[j, int] * dot_λ[d,k]) )
-
 	@constraint(s1, c1[i in products, j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_v[j,d,k] >= log(S[i,j])*dot_λ[d,k] + dot_b[i,d,k])
 	@constraint(s1, c2[j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_ns[j,d,k] == sum(log(int) * dot_y[(int-1)*length(stages)+j,d,k] for int in integer))
 	@constraint(s1, c3[j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_ns[j,d,k] <= dot_n[j,d,k])
 	@constraint(s1, c4[i in products, j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_ns[j,d,k] + dot_tl[i,d,k] >= log(t[i,j])*dot_λ[d,k])
-	@constraint(s1, c5[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], sum(Q[i] * dot_tl_b[i,d,k] for i in products) <= H*dot_λ[d,k] + dot_L[d,k])
+	@NLconstraint(s1, c5[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], sum(Q[i] * (dot_λ[d,k]*(1-ϵ)+ϵ)*exp(dot_tl[i,d,k]/(dot_λ[d,k]*(1-ϵ)+ϵ)-dot_b[i,d,k]/(dot_λ[d,k]*(1-ϵ)+ϵ))- Q[i]*ϵ*(1-dot_λ[d,k]) for i in products) <= H*dot_λ[d,k] + dot_L[d,k])
 	@constraint(s1, c6[j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], sum(dot_y[(int-1)*length(stages)+j,d,k] for int in integer) == dot_λ[d,k])	
-	@constraint(s1, c7[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_firststagecost[d,k]>= prob * sum(alpha[j] * dot_n_v[j,d,k] for j in stages))
-	@constraint(s1, c8[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_secondstagecost[d,k]>=prob *( sum( lambda[j] * sum(int * dot_y[(int-1)*length(stages)+j,d,k] for int in integer) for j in stages)+ delta*dot_L[d,k]) )
+	@NLconstraint(s1, c7[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_firststagecost[d,k]>= prob * sum(alpha[j] * (dot_λ[d,k]*(1-ϵ)+ϵ)*exp(dot_n[j,d,k]/(dot_λ[d,k]*(1-ϵ)+ϵ) + beta[j] * dot_v[j,d,k]/(dot_λ[d,k]*(1-ϵ)+ϵ)) - alpha[j] * ϵ*(1-dot_λ[d,k]) for j in stages))
+	@NLconstraint(s1, c8[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_secondstagecost[d,k]>=prob *( sum( lambda[j] *(dot_λ[d,k]*(1-ϵ)+ϵ) * exp(dot_ns[j,d,k]/(dot_λ[d,k]*(1-ϵ)+ϵ) ) -lambda[j]*ϵ*(1-dot_λ[d,k]) for j in stages)+ delta*dot_L[d,k]) )
 
     #x=∑ẋ, y=∑ẏ, ∑λ=1
     @constraint(s1, e1[int in integer, j in stages, d in disjunction], yf[int, j]==sum(dot_yf[int,j,d,k] for k in max_djc if k<= 2^(length(djc[d]))))
@@ -78,10 +85,7 @@ function generate_sub(; yfbar=zeros(length(integer), length(stages)), nbar=zeros
     @constraint(s1, e9[d in disjunction], firststagecost == sum(dot_firststagecost[d,k] for k in max_djc if k<= 2^(length(djc[d]))))
     @constraint(s1, e10[d in disjunction], secondstagecost == sum(dot_secondstagecost[d,k] for k in max_djc if k<= 2^(length(djc[d]))))
     @constraint(s1, e11[d in disjunction], sum(dot_λ[d,k] for k in max_djc if k<= 2^(length(djc[d]))) == 1)
-    @constraint(s1, e12[i in products, d in disjunction], tl_b[i] == sum(dot_tl_b[i,d,k] for k in max_djc if k<= 2^(length(djc[d]))))
-    @constraint(s1, e13[j in stages, d in disjunction], n_v[j] == sum(dot_n_v[j,d,k] for k in max_djc if k<= 2^(length(djc[d]))))
 
-    
     #0⩽ẋ⩽xᵘᵇλ    0⩽ẏ⩽yᵘᵇλ
     @constraint(s1, b1[int in integer, j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_yf[int,j,d,k]<= dot_λ[d,k])
     @constraint(s1, b2[j in J1, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_y[j, d,k] <= dot_λ[d,k])
@@ -94,12 +98,9 @@ function generate_sub(; yfbar=zeros(length(integer), length(stages)), nbar=zeros
     @constraint(s1, b9[i in products, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_b[i,d,k]<=dot_λ[d,k]*log(min(VU*inv_S[i,:])))
     @constraint(s1, b10[i in products, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_b[i,d,k]>=dot_λ[d,k]*log(min(VL*inv_S[i,:])))
     @constraint(s1, b11[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_L[d,k]<=dot_λ[d,k]*1.2e5)
-    @constraint(s1, b12[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_firststagecost[d,k] <=prob * dot_λ[d,k] * 7e6)
-    @constraint(s1, b13[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_secondstagecost[d,k] <= prob * dot_λ[d,k] * 2.7e7)
-    @constraint(s1, b14[i in products, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_tl_b[i,d,k] >= lb_tl_b[i] * dot_λ[d,k])
-    @constraint(s1, b15[i in products, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_tl_b[i,d,k] <= ub_tl_b[i] * dot_λ[d,k])
-    @constraint(s1, b16[j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_n_v[j,d,k] >= lb_nv * dot_λ[d,k])
-    @constraint(s1, b17[j in stages, d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_n_v[j,d,k] <= ub_nv * dot_λ[d,k])
+    @constraint(s1, b12[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_firststagecost[d,k] <=prob * dot_λ[d,k] * 2.4e5)
+    @constraint(s1, b13[d in disjunction, k in max_djc; k<= 2^(length(djc[d]))], dot_secondstagecost[d,k] <= prob * dot_λ[d,k] * 2e7)
+
     #yⱼ=0 or 1
     index_d = 1
     for item in djc

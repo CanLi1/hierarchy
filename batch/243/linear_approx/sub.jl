@@ -9,8 +9,8 @@ function generate_sub(; yfbar=zeros(length(integer), length(stages)), nbar=zeros
     #, KTR_PARAM_OUTLEV=1
 	# s1 = Model(solver=BaronSolver())
 	#KTR_PARAM_MAXTIMECPU=120.0
-    s1 = Model(solver=GurobiSolver(Method=1))
-    # s1 = Model(solver=CplexSolver(CPX_PARAM_THREADS=1))
+    # s1 = Model(solver=GurobiSolver(Method=1))
+    s1 = Model(solver=CplexSolver(CPX_PARAM_THREADS=1))
     #sets for number of disjunctions
     disjunction=1:length(djc)
 

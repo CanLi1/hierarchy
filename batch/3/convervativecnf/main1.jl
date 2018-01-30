@@ -1,8 +1,8 @@
 
 
 addprocs(3)
-@everywhere include("input.jl")
-@everywhere include("sub.jl")
+@everywhere include("input1.jl")
+@everywhere include("sub1.jl")
 @everywhere include("master.jl")
 @everywhere include("ubsub.jl")
 @everywhere include("linear_nlprelax.jl")
@@ -76,12 +76,11 @@ while relax_UB > relax_LB + 1
     	push!(temp_g, 0.0)
 
     	#update first stage decisions
-        #update first stage decisions
         for j in stages
-            JuMP.setRHS(getindex(sub_problem[s], :t3)[j], nbarr[j])
-            JuMP.setRHS(getindex(sub_problem[s], :t2)[j], vbarr[j])
+            setvalue(getindex(sub_problem[s], :nbar)[j], nbarr[j])
+            setvalue(getindex(sub_problem[s], :vbar)[j], vbarr[j])
             for int in integer
-                JuMP.setRHS(getindex(sub_problem[s], :t1)[int,j], yfbarr[int,j])
+                setvalue(getindex(sub_problem[s], :yfbar)[int,j], yfbarr[int,j])
             end
         end
     end
@@ -163,12 +162,11 @@ println(sub_obj_record)
 sub_problem = []
 for s in scenarios
     push!(sub_problem, generate_nlprelax(Q=Q[:,s], prob =prob[s]))
-    #update first stage decisions
     for j in stages
-        JuMP.setRHS(getindex(sub_problem[s], :t3)[j], nbarr[j])
-        JuMP.setRHS(getindex(sub_problem[s], :t2)[j], vbarr[j])
+        setvalue(getindex(sub_problem[s], :nbar)[j], nbarr[j])
+        setvalue(getindex(sub_problem[s], :vbar)[j], vbarr[j])
         for int in integer
-            JuMP.setRHS(getindex(sub_problem[s], :t1)[int,j], yfbarr[int,j])
+            setvalue(getindex(sub_problem[s], :yfbar)[int,j], yfbarr[int,j])
         end
     end
     solve(sub_problem[s])

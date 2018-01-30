@@ -1,4 +1,3 @@
-using JuMP
 function max(d::Array{Float64,1})
 	max_item = d[1]
 	for item in d
@@ -30,14 +29,20 @@ function check_integer(array)
 end
 
 function psolve(m::JuMP.Model)
-	temp = solve(m, relaxation=true)
-	d = Dict()
-	d[:status] = temp
-	d[:objective] = getobjectivevalue(m)
-	d[:yf_dual] = getdual(getindex(m, :t1))
-	d[:v_dual] = getdual(getindex(m, :t2))
-	d[:n_dual] = getdual(getindex(m, :t3))
-	d[:model] = m 
+	try
+		global temp = solve(m)
+		global d = Dict()
+		d[:status] = temp
+		d[:objective] = getobjectivevalue(m)
+		d[:yf_dual] = getdual(getindex(m, :t1))
+		d[:v_dual] = getdual(getindex(m, :t2))
+		d[:n_dual] = getdual(getindex(m, :t3))
+		d[:model] = m 
+	catch
+		global d = Dict()
+		d[:status] = :error
+	end
+
 	return d
 end
 function psolve_sub(m::JuMP.Model)

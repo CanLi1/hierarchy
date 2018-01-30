@@ -1,6 +1,6 @@
 
 
-addprocs(3)
+addprocs(23)
 @everywhere include("input.jl")
 @everywhere include("sub.jl")
 @everywhere include("master.jl")
@@ -44,7 +44,7 @@ end
 m = generate_master()
 obj_master = []
 a = now()
-while relax_UB > relax_LB + 1
+while relax_UB > relax_LB + 10 
     c = now()
     solve(m)
     d = now()
@@ -184,7 +184,7 @@ while UB > LB * 1.001
     end
     m = generate_master(mult_yf=mult_yf, mult_n=mult_n, mult_v=mult_v,g=g, iter=1:length(mult_yf))
 
-    while relax_UB > relax_LB + 1e-1
+    while relax_UB > relax_LB + 1e1
         c = now()
         solve(m)
         d = now()
@@ -231,24 +231,27 @@ while UB > LB * 1.001
         end
 
         c = now()
-        results = pmap(psolve, sub_problem)
+        results = pmap(psolve_sub, sub_problem)
         d = now()
         sub_time = sub_time + d - c
 
         for s in scenarios
             if results[s][:status] != :Optimal
-                error("lp solver converges to an infeasible solution")
+                #set all the multipliers to 0 
+                results[s][:objective] = 1e8
             end  
 
             push!(temp_sub_stat, results[s][:status])   
-            for j in stages
-                temp_mult_n[s][j] = results[s][:n_dual][j]
-                temp_mult_v[s][j] = results[s][:v_dual][j]
-                for int in integer
-                    temp_mult_yf[s][int, j] = results[s][:yf_dual][int, j]
+            if results[s][:status] == :Optimal
+                for j in stages
+                    temp_mult_n[s][j] = results[s][:n_dual][j]
+                    temp_mult_v[s][j] = results[s][:v_dual][j]
+                    for int in integer
+                        temp_mult_yf[s][int, j] = results[s][:yf_dual][int, j]
+                    end
                 end
+                temp_g[s] = results[s][:objective]- sum(sum(temp_mult_yf[s][int,j] * yfbarr[int, j] for int in integer)+ temp_mult_n[s][j] * nbarr[j]+ temp_mult_v[s][j] * vbarr[j] for j in stages)
             end
-            temp_g[s] = results[s][:objective]- sum(sum(temp_mult_yf[s][int,j] * yfbarr[int, j] for int in integer)+ temp_mult_n[s][j] * nbarr[j]+ temp_mult_v[s][j] * vbarr[j] for j in stages)
         end
 
         #update upper bound 
@@ -267,12 +270,12 @@ while UB > LB * 1.001
 
         m = generate_master(mult_yf=mult_yf, mult_n=mult_n, mult_v=mult_v,g=g, iter=1:length(mult_yf))
        
-        if relax_UB > relax_LB + 1e-1
+        if relax_UB > relax_LB + 1e1
             yfbar_for_ub = yfbarr
             nbar_for_ub = nbarr
             vbar_for_ub = vbarr
         end
-        if length(mult_yf) > temp_length + 200
+        if length(mult_yf) > temp_length + 100
             break
         end
 

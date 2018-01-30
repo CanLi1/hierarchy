@@ -10,9 +10,9 @@ intp = 1:300
 #parameters
 alpha = ones(length(stages)) * 250.0
 beta = ones(length(stages)) * 0.6
-delta = 1330.0
+delta = 230
 lambda = ones(length(stages)) * 2000
-VL = 300.0
+VL = 1300.0
 VU = 2300.0
 H = 5000
 
@@ -47,12 +47,26 @@ baseprob = [0.3 0.4 0.3]
 ratio =[1.1 1 0.9]
 
 #3 scenarios
-scenarios = 1:3
-prob = baseprob
-Q = zeros(length(products), 3)
-Q[1:length(products), 1] = baseQ[1:length(products)] * ratio[1]
-Q[1:length(products), 2] = baseQ[1:length(products)] * ratio[2]
-Q[1:length(products), 3] = baseQ[1:length(products)] * ratio[3]
+scenarios = 1:243
+prob = zeros(length(scenarios))
+Q = zeros(length(products), 243)
+for s1 in 1:3
+  for s2 in 1:3
+    for s3 in 1:3
+      for s4 in 1:3
+        for s5 in 1:3
+          temp_s = 9 * (s1-1) + 3 * (s2-1) + s3 + 27 *(s4-1) + 81 * (s5-1)
+          Q[1, temp_s] = baseQ[1] * ratio[s1]
+          Q[2, temp_s] = baseQ[2] * ratio[s2]
+          Q[3, temp_s] = baseQ[3] * ratio[s3]
+          Q[4, temp_s] = baseQ[4] * ratio[s4]
+          Q[5, temp_s] = baseQ[5] * ratio[s5]
+          prob[temp_s] = baseprob[s1] * baseprob[s2] * baseprob[s3] * baseprob[s4] * baseprob[s5]
+        end
+      end
+    end
+  end
+end
 
 
 #point of interpolation
