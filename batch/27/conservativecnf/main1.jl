@@ -1,8 +1,8 @@
 
 
-addprocs(3)
+addprocs(23)
 @everywhere include("input.jl")
-@everywhere include("sub.jl")
+@everywhere include("sub1.jl")
 @everywhere include("master.jl")
 @everywhere include("ubsub.jl")
 @everywhere include("linear_nlprelax.jl")
@@ -251,34 +251,44 @@ while UB > LB * 1.001
 
             #update first stage decisions
 
+            # for j in stages
+            #     JuMP.setRHS(getindex(sub_problem[s], :t3)[j], nbarr[j])
+            #     JuMP.setRHS(getindex(sub_problem[s], :t2)[j], vbarr[j])
+            #     for int in integer
+            #         JuMP.setRHS(getindex(sub_problem[s], :t1)[int,j], yfbarr[int,j])
+            #     end
+            # end
             for j in stages
-                JuMP.setRHS(getindex(sub_problem[s], :t3)[j], nbarr[j])
-                JuMP.setRHS(getindex(sub_problem[s], :t2)[j], vbarr[j])
-                for int in integer
-                    JuMP.setRHS(getindex(sub_problem[s], :t1)[int,j], yfbarr[int,j])
-                end
+                    setvalue(getindex(sub_problem[s], :nbar)[j], nbarr[j])
+                    setvalue(getindex(sub_problem[s], :vbar)[j], vbarr[j])
+                    for int in integer
+                        setvalue(getindex(sub_problem[s], :yfbar)[int,j], yfbarr[int,j])
+                    end
+                end 
             end
         end
 
         c = now()
-        results = pmap(psolve, sub_problem)
+        results = pmap(psolve_sub, sub_problem)
         d = now()
         sub_time = sub_time + d - c
 
         for s in scenarios
-            if results[s][:status] != :Optimal
-                error("lp solver converges to an infeasible solution")
-            end  
+            # if results[s][:status] != :Optimal
+            #     # error("lp solver converges to an infeasible solution")
+            # end  
 
             push!(temp_sub_stat, results[s][:status])   
-            for j in stages
-                temp_mult_n[s][j] = results[s][:n_dual][j]
-                temp_mult_v[s][j] = results[s][:v_dual][j]
-                for int in integer
-                    temp_mult_yf[s][int, j] = results[s][:yf_dual][int, j]
+            if results[:status] == :Optimal
+                for j in stages
+                    temp_mult_n[s][j] = results[s][:n_dual][j]
+                    temp_mult_v[s][j] = results[s][:v_dual][j]
+                    for int in integer
+                        temp_mult_yf[s][int, j] = results[s][:yf_dual][int, j]
+                    end
                 end
+                temp_g[s] = results[s][:objective]- sum(sum(temp_mult_yf[s][int,j] * yfbarr[int, j] for int in integer)+ temp_mult_n[s][j] * nbarr[j]+ temp_mult_v[s][j] * vbarr[j] for j in stages)
             end
-            temp_g[s] = results[s][:objective]- sum(sum(temp_mult_yf[s][int,j] * yfbarr[int, j] for int in integer)+ temp_mult_n[s][j] * nbarr[j]+ temp_mult_v[s][j] * vbarr[j] for j in stages)
         end
 
         #update upper bound 

@@ -1,6 +1,6 @@
 
 
-addprocs(3)
+addprocs(23)
 @everywhere include("input.jl")
 @everywhere include("sub.jl")
 @everywhere include("master.jl")

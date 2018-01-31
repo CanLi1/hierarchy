@@ -1,4 +1,4 @@
-
+using CPLEX
 function generate_nlprelax(; yfbar=zeros(length(integer), length(stages)), nbar=zeros(length(stages)), vbar=log(VL) * ones(length(stages)), Q=zeros(5), prob=0.0)
 	# s1 = Model(solver=GurobiSolver(Method=1))
 	s1 = Model(solver=CplexSolver(CPX_PARAM_THREADS=1))
