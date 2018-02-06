@@ -3,7 +3,8 @@
  using CPLEX 
  using Ipopt
 include("input.jl")
-include("cnf.jl")
+include("dnf.jl")
+include("ubsub.jl")
  function generate_fullspace()
  	m = Model(solver=PajaritoSolver(rel_gap=0.0001, mip_solver=CplexSolver(CPX_PARAM_SCRIND=0), cont_solver=IpoptSolver(print_level=0)))
  	
@@ -55,7 +56,7 @@ include("cnf.jl")
  y = getvalue(getindex(m, :y))
  obj_record = []
  for s in scenarios
- 	sub= generate_cnf(xbar=x, ybar=y, Carea=Carea[:,s], prob=prob[s])
+ 	sub= generate_ubsub(xbar=x, ybar=y, Carea=Carea[:,s], prob=prob[s])
  	solve(sub)
  	push!(obj_record, getobjectivevalue(sub))
  end

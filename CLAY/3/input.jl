@@ -1,3 +1,9 @@
+using JuMP
+using Ipopt
+using Mosek
+using KNITRO 
+using Pajarito
+using CPLEX
 #sets
 rectangles = 1:3
 areas = 1:2
@@ -15,6 +21,10 @@ base_Carea = [800 800]
 #big M
 M = 100
 M2 = 1500
+xlb = ones(length(rectangles)) * (-10)
+xub = ones(length(rectangles)) * 10
+ylb = ones(length(rectangles)) * (-5)
+yub = ones(length(rectangles)) * 40
 #scenarios 
 scenarios = 1:3
 prob = [0.3 0.4 0.3]

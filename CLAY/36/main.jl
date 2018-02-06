@@ -1,6 +1,6 @@
 
 
-addprocs(3)
+addprocs(23)
 @everywhere include("input.jl")
 @everywhere include("dnf.jl")
 @everywhere include("knitro_dnf.jl")

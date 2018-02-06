@@ -1,7 +1,7 @@
 using JuMP
 using Ipopt
 using Mosek
-function generate_cnf(;xbar=zeros(length(rectangles)), ybar=zeros(length(rectangles)), Carea=zeros(areas), prob=prob)
+function generate_cnf(;xbar=zeros(length(rectangles)), ybar=zeros(length(rectangles)), Carea=zeros(areas), prob=0)
 	# s1 = Model(solver=KnitroSolver())
     # s1 = Model(solver=IpoptSolver())
     s1 = Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=1, MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000))

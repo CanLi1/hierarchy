@@ -1,5 +1,4 @@
-
-function generate_dnf(;xbar=zeros(length(rectangles)), ybar=zeros(length(rectangles)), Carea=zeros(areas), prob=0, xub = zeros(length(rectangles)), yub = zeros(length(rectangles)), xlb = zeros(length(rectangles)), ylb = zeros(length(rectangles)))
+function generate_knitro_dnf(;xbar=zeros(length(rectangles)), ybar=zeros(length(rectangles)), Carea=zeros(areas), prob=0, xub = zeros(length(rectangles)), yub = zeros(length(rectangles)), xlb = zeros(length(rectangles)), ylb = zeros(length(rectangles)))
 	# s1 = Model(solver=KnitroSolver())
     s1 = Model(solver=IpoptSolver())
     # s1 = Model(solver=MosekSolver(MSK_IPAR_NUM_THREADS=1, MSK_IPAR_INTPNT_MAX_ITERATIONS=1000000))

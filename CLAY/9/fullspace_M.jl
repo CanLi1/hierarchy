@@ -2,10 +2,11 @@
  using Pajarito
  using CPLEX 
  using Ipopt
+ using KNITRO
 include("input.jl")
  function generate_fullspace()
- 	m = Model(solver=PajaritoSolver(timeout=10000, rel_gap=0.0001, mip_solver=CplexSolver(CPX_PARAM_SCRIND=0), cont_solver=IpoptSolver(print_level=0)))
- 	
+ 	# m = Model(solver=PajaritoSolver(timeout=10000, rel_gap=0.0001, mip_solver=CplexSolver(CPX_PARAM_SCRIND=0), cont_solver=IpoptSolver(print_level=0)))
+ 	m = Model(solver=KnitroSolver())
  	@variable(m, delx[i in rectangles, j in rectangles; i<j]>=0)
  	@variable(m, dely[i in rectangles, j in rectangles; i<j]>=0)
  	@variable(m, x[i in rectangles])

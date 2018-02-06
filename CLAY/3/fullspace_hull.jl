@@ -4,10 +4,12 @@
  using Ipopt
  using Mosek
  using BARON
+ using KNITRO
 include("input.jl")
  function generate_fullspace()
- 	m = Model(solver=PajaritoSolver(rel_gap=0.0001, mip_solver=CplexSolver(), cont_solver=IpoptSolver()))
+ 	# m = Model(solver=PajaritoSolver(rel_gap=0.0001, mip_solver=CplexSolver(), cont_solver=IpoptSolver()))
  	# m = Model(solver=BaronSolver())
+ 	m = Model(solver=KnitroSolver())
  	@variable(m, delx[i in rectangles, j in rectangles; i<j]>=0)
  	@variable(m, dely[i in rectangles, j in rectangles; i<j]>=0)
  	@variable(m, x[i in rectangles])

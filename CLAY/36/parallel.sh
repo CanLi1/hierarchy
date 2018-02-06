@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Set the number of nodes and processes per node
-#PBS -l nodes=1:ppn=11
+#PBS -l nodes=1:ppn=12
 
 # Set max wallclock time
 #PBS -l walltime=3:00:00
@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/CLAY/36
-julia   fullspace_hull.jl 
+julia   main.jl 

@@ -15,5 +15,5 @@
 # Use submission environment
 #PBS -V
 
-cd ~/work/hierarchy/CLAY/9
+cd ~/work/hierarchy/CLAY/3
 julia   main.jl 
