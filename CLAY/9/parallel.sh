@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/CLAY/9
-julia   main.jl 
+gams alphaecp_M.gms -lo=4

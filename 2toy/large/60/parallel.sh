@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/2toy/large/60
-julia fullspace2.jl
+gams dicopt.gms -lo=4

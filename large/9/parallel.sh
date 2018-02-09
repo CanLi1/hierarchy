@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/large/9
-julia main.jl
+gams sbb.gms -lo=4

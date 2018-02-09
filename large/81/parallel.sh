@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Set the number of nodes and processes per node
-#PBS -l nodes=1:ppn=12
+#PBS -l nodes=1:ppn=1
 
 # Set max wallclock time
 #PBS -l walltime=13:00:00
@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/large/81
-julia  -p 24 main.jl 
+gams sbb.gms -lo=4
