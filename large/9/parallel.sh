@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/large/9
-gams sbb.gms -lo=4
+gams alphaecp.gms -lo=4

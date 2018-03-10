@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/2toy/large/20
-gams dicopt.gms -lo=4
+gams alphaecp.gms -lo=4

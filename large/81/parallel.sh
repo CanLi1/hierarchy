@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Set the number of nodes and processes per node
-#PBS -l nodes=1:ppn=1
+#PBS -l nodes=1:ppn=12
 
 # Set max wallclock time
 #PBS -l walltime=13:00:00
@@ -16,4 +16,4 @@
 #PBS -V
 
 cd ~/work/hierarchy/large/81
-gams sbb.gms -lo=4
+gams alphaecp.gms -lo=4 trace=resultecp traceopt=3

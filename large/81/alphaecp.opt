@@ -1,1 +1,5 @@
 ECPmaster 1
+ECPstrategy 1
+CUTnrcuts 0.25
+MIPoptcr 0.5
+MIPoptcrlim 50

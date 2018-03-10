@@ -37,6 +37,4 @@ option optcr = 0.0001;
 option optca = 0;
 option reslim = 1e4;
 option threads = 12;
-  OPTION LIMROW = 0;
-OPTION LIMCOL = 0;
 solve toy using minlp minimizing obj;
